@@ -6,7 +6,7 @@ from sqlalchemy import Column, String
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import relationship
 
-from app.batadase import Base, async_session_maker
+from batadase import Base, async_session_maker
 
 
 class User(SQLAlchemyBaseUserTable[int], Base):

@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi_filter import FilterDepends
 
-from app.auth.auth import current_active_user
-from app.auth.models import User
-from app.note_app import crud, models, schemas, filters
+from auth.auth import current_active_user
+from auth.models import User
+from note_app import crud, models, schemas, filters
 
 note_router = APIRouter(prefix='/notes', tags=['Note'])
 
