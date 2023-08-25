@@ -4,8 +4,6 @@ from sqlalchemy import Update, Delete, select
 from sqlalchemy.orm import contains_eager
 
 from app.auth.models import User
-# from sqlalchemy.orm import selectinload, joinedload, contains_eager
-
 from app.batadase import session_maker, async_session_maker
 from app.note_app.filters import NoteFilter
 from .models import Note
@@ -56,7 +54,7 @@ async def get_list_note(note_filter: NoteFilter, limit: int | None = 25, page: i
 
 
 def update_note_fields(note_id: int, title: str = None, content: str = None) -> bool:
-    with session_maker() as session:
+    with async_session_maker() as session:
         stmt = Update(Note).filter_by(id=note_id)
         if title is not None:
             stmt = stmt.values(title=title)
@@ -68,7 +66,7 @@ def update_note_fields(note_id: int, title: str = None, content: str = None) -> 
 
 
 def delete_note(note_id: int) -> bool:
-    with session_maker() as session:
+    with async_session_maker() as session:
         stmt = Delete(Note).filter_by(id=note_id)
         result = session.execute(stmt)
         session.commit()
