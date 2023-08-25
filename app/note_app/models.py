@@ -1,7 +1,7 @@
 from sqlalchemy import ForeignKey, String, Column, DateTime, func, Integer
 from sqlalchemy.orm import relationship
 
-from batadase import Base
+from app.batadase import Base
 
 
 # class User(Base):

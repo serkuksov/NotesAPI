@@ -3,11 +3,11 @@ from typing import List
 from sqlalchemy import Update, Delete, select
 from sqlalchemy.orm import contains_eager
 
-from auth.models import User
+from app.auth.models import User
 # from sqlalchemy.orm import selectinload, joinedload, contains_eager
 
-from batadase import session_maker, async_session_maker
-from note_app.filters import NoteFilter
+from app.batadase import session_maker, async_session_maker
+from app.note_app.filters import NoteFilter
 from .models import Note
 
 

@@ -1,13 +1,12 @@
-import datetime
 from typing import Optional
 
 from fastapi import Query
-from fastapi_filter import FilterDepends, with_prefix
+from fastapi_filter import FilterDepends
 from fastapi_filter.contrib.sqlalchemy import Filter
 from pydantic import Field
 
-from auth.models import User
-from note_app.models import Note
+from app.auth.models import User
+from app.note_app.models import Note
 
 
 class UserFilter(Filter):

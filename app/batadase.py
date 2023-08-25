@@ -14,4 +14,3 @@ session_maker = sessionmaker(bind=engine)
 
 async_engine = create_async_engine(ASYNC_SQL_URL, echo=True)
 async_session_maker = async_sessionmaker(async_engine, expire_on_commit=False)
-

@@ -5,9 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from batadase import Base
-import note_app.models
-import auth.models
+from app.batadase import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
