@@ -4,7 +4,7 @@ from sqlalchemy import Update, Delete, select
 from sqlalchemy.orm import contains_eager
 
 from auth.models import User
-from batadase import session_maker, async_session_maker
+from db import session_maker, async_session_maker
 from note_app.filters import NoteFilter
 from .models import Note
 

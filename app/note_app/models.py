@@ -1,19 +1,7 @@
 from sqlalchemy import ForeignKey, String, Column, DateTime, func, Integer
 from sqlalchemy.orm import relationship
 
-from batadase import Base
-
-
-# class User(Base):
-#     __tablename__ = 'user'
-#
-#     user_name = Column(String(60), nullable=False, unique=True)
-#     password = Column(String, nullable=False)
-#
-#     notes = relationship('Note', overlaps="user")
-#
-#     def __repr__(self):
-#         return f'Пользователь {self.user_name}'
+from db import Base
 
 
 class Note(Base):

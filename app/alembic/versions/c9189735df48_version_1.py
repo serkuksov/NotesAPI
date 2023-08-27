@@ -1,7 +1,7 @@
 """Version-1
 
 Revision ID: c9189735df48
-Revises: 
+Revises:
 Create Date: 2023-07-15 14:56:59.222792
 
 """

@@ -1,12 +1,36 @@
 import os
+from pathlib import Path, PurePath
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'secret-key')
+from pydantic import BaseSettings
 
-DB_HOST = os.getenv('DB_HOST', 'localhost')
-DB_PORT = os.getenv('DB_PORT', '5432')
-DB_NAME = os.getenv('DB_NAME', 'postgres')
-DB_USER = os.getenv('DB_USER', 'postgres')
-DB_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'postgres')
+dir_path = Path(__file__).resolve().parent.parent
+env_file_name = '.env'
+env_path = PurePath(dir_path, env_file_name)
 
-SQL_URL = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
-ASYNC_SQL_URL = f'postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+
+class Settings(BaseSettings):
+    """Получение базовых настроек из переменных окружения"""
+    MODE: str
+    SECRET_KEY: str
+
+    DB_HOST: str
+    DB_PORT: int
+    POSTGRES_DB: str
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+
+    @property
+    def SQL_URL(self) -> str:
+        return (f'postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@'
+                f'{self.DB_HOST}:{self.DB_PORT}/'
+                f'{self.POSTGRES_DB}')
+
+    @property
+    def ASYNC_SQL_URL(self) -> str:
+        return (f'postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@'
+                f'{self.DB_HOST}:{self.DB_PORT}/'
+                f'{self.POSTGRES_DB}')
+
+    class Config:
+        env_file = env_path
+        allow_mutation = False
