@@ -34,3 +34,6 @@ class Settings(BaseSettings):
     class Config:
         env_file = env_path
         allow_mutation = False
+
+
+settings = Settings()
