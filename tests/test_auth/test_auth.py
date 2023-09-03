@@ -1,8 +1,6 @@
-import json
-
 from httpx import AsyncClient, Client
 
-from tests.test_auth.conftest import get_user_from_database
+from tests.test_auth.conftest import get_user_from_database, get_jwt_token_authorized_user
 
 
 # Асинхронный тест
@@ -54,3 +52,30 @@ async def test_login(async_client: AsyncClient):
     assert response.status_code == 200
     assert 'access_token' in response.json()
     assert 'token_type' in response.json()
+
+
+async def test_login_non_existing_user(async_client: AsyncClient):
+    data_user = {
+        'username': 'test',
+        'password': 'string2',
+    }
+    response = await async_client.post('/auth/jwt/login', data=data_user)
+    assert response.status_code == 400
+    assert response.json()['detail'] == 'LOGIN_BAD_CREDENTIALS'
+
+
+async def test_logout(async_client: AsyncClient):
+    valid_jwt_token = await get_jwt_token_authorized_user(async_client)
+    headers = {'Authorization': f"Bearer {valid_jwt_token}"}
+    response = await async_client.get('/users/me', headers=headers)
+    assert response.status_code == 200
+    response = await async_client.post('/auth/jwt/logout', headers=headers)
+    assert response.status_code == 204
+    response = await async_client.get('/users/me')
+    assert response.status_code == 401
+
+
+async def test_logout_unauthorized_user(async_client: AsyncClient):
+    response = await async_client.post('/auth/jwt/logout')
+    assert response.status_code == 401
+    assert response.json()['detail'] == 'Unauthorized'
