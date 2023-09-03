@@ -25,6 +25,6 @@ cookie_backend = AuthenticationBackend(
     get_strategy=get_jwt_strategy,
 )
 
-auth_backend = cookie_backend
-fastapi_users = FastAPIUsers[User, int](get_user_manager, [cookie_backend])
+auth_backend = jwt_backend
+fastapi_users = FastAPIUsers[User, int](get_user_manager, [jwt_backend])
 current_active_user = fastapi_users.current_user(active=True)
