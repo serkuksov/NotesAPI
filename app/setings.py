@@ -31,11 +31,6 @@ class Settings(BaseSettings):
                 f'{self.DB_HOST}:{self.DB_PORT}/'
                 f'{self.POSTGRES_DB}')
 
-    #TODO переделать настройки для подключения через .test.env
-    @property
-    def ASYNC_TEST_SQL_URL(self) -> str:
-        return (f'postgresql+asyncpg://postgres:postgres@localhost:5433/notes-test')
-
     class Config:
         env_file = env_path
         allow_mutation = False

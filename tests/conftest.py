@@ -12,7 +12,7 @@ from setings import settings
 from main import app
 
 # DATABASE
-engine_test = create_async_engine(settings.ASYNC_TEST_SQL_URL, poolclass=NullPool)
+engine_test = create_async_engine(settings.ASYNC_SQL_URL, poolclass=NullPool)
 async_session_maker = async_sessionmaker(engine_test, class_=AsyncSession, expire_on_commit=False)
 Base.metadata.bind = engine_test
 
@@ -27,6 +27,8 @@ app.dependency_overrides[get_async_session] = override_get_async_session
 
 @pytest.fixture(autouse=True, scope='session')
 async def prepare_database():
+    # Проверка что используются тестовые переменные окружения
+    assert settings.MODE == 'TEST'
     async with engine_test.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
