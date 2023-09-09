@@ -1,3 +1,4 @@
+import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 
@@ -12,11 +13,24 @@ async def get_user_from_database(user_id: int) -> User:
         return result.fetchone()[0]
 
 
-async def get_jwt_token_authorized_user(async_client: AsyncClient) -> str:
+@pytest.fixture(autouse=True, scope="session")
+async def create_user_in_database(async_client: AsyncClient):
     data_user = {
-        'username': 'user@example.com',
-        'password': 'string',
+        "email": "test_user@example.com",
+        "user_name": "test_user",
+        "password": "string",
     }
-    response = await async_client.post('/auth/jwt/login', data=data_user)
+    response = await async_client.post("/auth/register", json=data_user)
+    assert response.status_code == 201
+
+
+@pytest.fixture(autouse=True, scope="session")
+async def jwt_token(async_client: AsyncClient) -> str:
+    data_user = {
+        "username": "test_user@example.com",
+        "password": "string",
+    }
+    response = await async_client.post("/auth/jwt/login", data=data_user)
     data_from_response = response.json()
+    assert response.status_code == 200
     return data_from_response["access_token"]
