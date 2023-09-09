@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi_filter import FilterDepends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
@@ -81,7 +83,7 @@ def get_note(
     }
 )
 def cerate_note(
-        note: schemas.NoteCreate = Depends(schemas.NoteCreate),
+        note: Annotated[schemas.NoteCreate, Body()],
         user: User = Depends(current_active_user),
         session: Session = Depends(get_session),
 ) -> models.Note:

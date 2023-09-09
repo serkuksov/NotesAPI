@@ -11,9 +11,9 @@ from .models import Note
 
 def create_note(
         user_id: int,
+        session: Session,
         title: str,
         content: str | None,
-        session: Session,
 ) -> Note:
     db_note = Note(user_id=user_id, title=title, content=content)
     session.add(db_note)
