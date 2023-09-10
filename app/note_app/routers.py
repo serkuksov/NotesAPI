@@ -9,58 +9,73 @@ from auth.auth import current_active_user
 from auth.models import User
 from db import get_async_session, get_session
 from note_app import crud, models, schemas, filters
+from note_app.models import Note
 
-note_router = APIRouter(prefix='/notes', tags=['Note'])
+note_router = APIRouter(prefix="/notes", tags=["Note"])
 
 
 @note_router.get(
-    '/',
+    "/",
     # response_model=list[schemas.NoteListUser],
     responses={
-        200: {'description': 'Успешный ответ'},
-    }
+        200: {"description": "Успешный ответ"},
+    },
 )
 async def get_list_note(
-        note_filter: filters.NoteFilter = FilterDepends(filters.NoteFilter),
-        pagination: schemas.Paginator = Depends(schemas.Paginator),
-        session: AsyncSession = Depends(get_async_session),
+    note_filter: filters.NoteFilter = FilterDepends(filters.NoteFilter),
+    pagination: schemas.Paginator = Depends(schemas.Paginator),
+    session: AsyncSession = Depends(get_async_session),
 ) -> list[schemas.NoteListUser]:
     """
     Возвращает список всех заметок совместно с информацией о создавшем пользователе
     """
-    result = await crud.get_list_note(note_filter, session,  **pagination.dict())
-    return [schemas.NoteListUser(user_name=elm.user.user_name, **elm.__dict__) for elm in result]
+    # TODO требуется разобраться с валидацией параметров order_by
+    note_atr = set(Note().__dict__["_sa_instance_state"].unloaded)
+    order_by_params = set(
+        str(note_filter.order_by).replace("+", "").replace("-", "").strip().split(",")
+    )
+    if not order_by_params.issubset(note_atr):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Переданы не корректные данные для сортировки",
+        )
+    result = await crud.get_list_note(note_filter, session, **pagination.dict())
+    return [
+        schemas.NoteListUser(user_name=elm.user.user_name, **elm.__dict__)
+        for elm in result
+    ]
 
 
 @note_router.get(
-    '/user/{user_id}/',
+    "/user/",
     response_model=list[schemas.NoteList],
     responses={
-        200: {'description': 'Успешный ответ'},
-    }
+        200: {"description": "Успешный ответ"},
+        401: {"description": "Unauthorized"},
+    },
 )
 def get_list_note_user(
-        user_id: int,
-        pagination: schemas.Paginator = Depends(schemas.Paginator),
-        session: Session = Depends(get_session),
+    user: User = Depends(current_active_user),
+    pagination: schemas.Paginator = Depends(schemas.Paginator),
+    session: Session = Depends(get_session),
 ) -> list[models.Note]:
     """
     Возвращает список всех заметок конкретного пользователя
     """
-    return crud.get_list_user_notes(user_id, session, **pagination.dict())
+    return crud.get_list_user_notes(user.id, session, **pagination.dict())
 
 
 @note_router.get(
-    '/{note_id}',
+    "/{note_id}/",
     response_model=schemas.Note,
     responses={
-        200: {'description': 'Успешный ответ'},
-        404: {'description': 'Объект с указаным id не найден'},
-    }
+        200: {"description": "Успешный ответ"},
+        404: {"description": "Объект с идентификатором id не найден"},
+    },
 )
-def get_note(
-        note_id: int,
-        session: Session = Depends(get_session),
+def get_note_by_id(
+    note_id: int,
+    session: Session = Depends(get_session),
 ) -> models.Note:
     """
     Возвращает информацию о заметке по ее идентификатору
@@ -69,23 +84,23 @@ def get_note(
     if note is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Заметка с идентификатором {note_id} не найдена'
+            detail=f"Объект с идентификатором {note_id} не найден",
         )
     return note
 
 
 @note_router.post(
-    '/',
+    "/",
     response_model=schemas.Note,
     status_code=status.HTTP_201_CREATED,
     responses={
-        201: {'description': 'Объект успешно создан'},
-    }
+        201: {"description": "Объект успешно создан"},
+    },
 )
 def cerate_note(
-        note: Annotated[schemas.NoteCreate, Body()],
-        user: User = Depends(current_active_user),
-        session: Session = Depends(get_session),
+    note: Annotated[schemas.NoteCreate, Body()],
+    user: User = Depends(current_active_user),
+    session: Session = Depends(get_session),
 ) -> models.Note:
     """
     Создание новой заметки
@@ -94,19 +109,19 @@ def cerate_note(
 
 
 @note_router.put(
-    '/{note_id}/',
+    "/{note_id}/",
     responses={
-        200: {'description': 'Объект успешно обнавлен'},
-        400: {'description': 'Не переданы параметры для обнавления'},
-        403: {'description': 'У пользователя не достаточно прав'},
-        404: {'description': 'Объект с указаным id не найден'},
-    }
+        200: {"description": "Объект с идентификатором id успешно обновлен"},
+        400: {"description": "Не переданы параметры для обновления объекта"},
+        403: {"description": "У пользователя не достаточно прав"},
+        404: {"description": "Объект с идентификатором id не найден"},
+    },
 )
 def update_note(
-        note_id: int,
-        note: schemas.NoteUpdate = Depends(schemas.NoteUpdate),
-        user: User = Depends(current_active_user),
-        session: Session = Depends(get_session),
+    note_id: int,
+    note: Annotated[schemas.NoteUpdate, Body()],
+    user: User = Depends(current_active_user),
+    session: Session = Depends(get_session),
 ) -> str:
     """
     Обновление заметки.
@@ -117,37 +132,39 @@ def update_note(
     if not existing_note:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Заметка с идентификатором {note_id} не найдена'
+            detail=f"Объект с идентификатором {note_id} не найден",
         )
 
     # Проверка прав доступа
     if user.id != existing_note.user_id and not user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail='Отсутствуют права на редактирование заметки'
+            detail="Отсутствуют права на редактирование объекта",
         )
 
     # Обновление полей заметки
     if note.title or note.content:
         crud.update_note_fields(note_id, session, **note.dict())
-        return 'Заметка с идентификатором {note_id} успешно обновлена'
+        return f"Объект с идентификатором {note_id} успешно обновлен"
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Не переданы параметры для обновления заголовка или содержимого заметки'
+            detail="Не переданы параметры для обновления объекта",
         )
 
 
 @note_router.delete(
-    '/{note_id}/',
+    "/{note_id}/",
     responses={
-        200: {'description': 'Объект успешно удален'},
-    }
+        200: {"description": "Объект с идентификатором id успешно удален"},
+        403: {"description": "Отсутствуют права на удаление объекта"},
+        404: {"description": "Объект с идентификатором id не найден"},
+    },
 )
 def delete_note(
-        note_id: int,
-        user: User = Depends(current_active_user),
-        session: Session = Depends(get_session),
+    note_id: int,
+    user: User = Depends(current_active_user),
+    session: Session = Depends(get_session),
 ) -> str:
     """
     Удаление заметки
@@ -158,19 +175,14 @@ def delete_note(
     if not existing_note:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Заметка с идентификатором {note_id} не найдена'
+            detail=f"Объект с идентификатором {note_id} не найден",
         )
 
     # Проверка прав доступа
     if user.id != existing_note.user_id and not user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail='Отсутствуют права на редактирование заметки'
+            detail="Отсутствуют права на удаление объекта",
         )
     if crud.delete_note(note_id, session):
-        return f'Заметка с идентификатором {note_id} успешно удалена'
-    else:
-        raise HTTPException(
-            status_code=404,
-            detail=f'Заметка с идентификатором {note_id} не найдена'
-        )
+        return f"Объект с идентификатором {note_id} успешно удален"
