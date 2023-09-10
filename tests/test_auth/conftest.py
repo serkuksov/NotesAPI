@@ -15,19 +15,27 @@ async def get_user_from_database(user_id: int) -> User:
 
 @pytest.fixture(autouse=True, scope="session")
 async def create_user_in_database(async_client: AsyncClient):
-    data_user = {
-        "email": "test_user@example.com",
-        "user_name": "test_user",
+    data_user_1 = {
+        "email": "test_user_1@example.com",
+        "user_name": "test_user_1",
         "password": "string",
     }
-    response = await async_client.post("/auth/register", json=data_user)
+    response = await async_client.post("/auth/register", json=data_user_1)
+    assert response.status_code == 201
+
+    data_user_2 = {
+        "email": "test_user_2@example.com",
+        "user_name": "test_user_2",
+        "password": "string",
+    }
+    response = await async_client.post("/auth/register", json=data_user_2)
     assert response.status_code == 201
 
 
 @pytest.fixture(autouse=True, scope="session")
 async def jwt_token(async_client: AsyncClient) -> str:
     data_user = {
-        "username": "test_user@example.com",
+        "username": "test_user_1@example.com",
         "password": "string",
     }
     response = await async_client.post("/auth/jwt/login", data=data_user)

@@ -11,7 +11,7 @@ async def test_register_ac(async_client: AsyncClient):
         "user_name": "user_name",
     }
     data_user_db = {
-        "id": 2,
+        "id": 3,
         "email": "user@example.com",
         "is_active": True,
         "is_superuser": False,
