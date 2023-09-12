@@ -37,7 +37,7 @@ async def get_list_note(
     if not order_by_params.issubset(note_atr):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Переданы не корректные данные для сортировки",
+            detail="Переданы не корректные данные для сортировки",
         )
     result = await crud.get_list_note(note_filter, session, **pagination.dict())
     return [

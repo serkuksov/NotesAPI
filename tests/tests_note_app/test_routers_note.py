@@ -3,11 +3,14 @@ from sqlalchemy import Delete, Insert, Select
 
 from note_app.models import Note
 from tests.conftest import async_session_maker
-from tests.test_auth.conftest import jwt_token
 
 
 class TestCreateNote:
-    async def test_create_note(self, async_client: AsyncClient, jwt_token: str):
+    async def test_create_note(
+        self,
+        async_client: AsyncClient,
+        jwt_token: str,
+    ):
         data_note = {
             "title": "title",
             "content": "content",
@@ -47,7 +50,9 @@ class TestCreateNote:
         assert response.json()["detail"] == "Unauthorized"
 
     async def test_create_note_not_valid(
-        self, async_client: AsyncClient, jwt_token: str
+        self,
+        async_client: AsyncClient,
+        jwt_token: str,
     ):
         headers = {"Authorization": f"Bearer {jwt_token}"}
 
@@ -74,8 +79,8 @@ class TestDeleteNote:
     ):
         headers = {"Authorization": f"Bearer {jwt_token}"}
         test_note = {
-            "title": f"test_delete_title",
-            "content": f"test_delete_content",
+            "title": "test_delete_title",
+            "content": "test_delete_content",
             "user_id": 1,
         }
         async with async_session_maker() as session:
@@ -125,7 +130,7 @@ class TestDeleteNote:
 
         response = await async_client.delete(f"/notes/{note_id}/", headers=headers)
         assert response.status_code == 403
-        assert response.json()["detail"] == f"Отсутствуют права на удаление объекта"
+        assert response.json()["detail"] == "Отсутствуют права на удаление объекта"
 
         async with async_session_maker() as session:
             query = Select(Note.id).where(Note.id == note_id)
@@ -213,7 +218,7 @@ class TestGetNote:
         response = await async_client.get("/notes/?order_by=test,-test2")
         assert response.status_code == 422
         assert (
-            response.json()["detail"] == f"Переданы не корректные данные для сортировки"
+            response.json()["detail"] == "Переданы не корректные данные для сортировки"
         )
 
     async def test_get_notes_search(
@@ -251,7 +256,7 @@ class TestGetNote:
     ):
         headers = {"Authorization": f"Bearer {jwt_token}"}
 
-        response = await async_client.get(f"/notes/user/", headers=headers)
+        response = await async_client.get("/notes/user/", headers=headers)
         assert response.status_code == 200
         response_data = response.json()
         note = response_data[0]
@@ -267,7 +272,7 @@ class TestGetNote:
         self,
         async_client: AsyncClient,
     ):
-        response = await async_client.get(f"/notes/user/")
+        response = await async_client.get("/notes/user/")
         assert response.status_code == 401
         assert response.json()["detail"] == "Unauthorized"
 
@@ -345,7 +350,7 @@ class TestUpdateNote:
         )
         assert response.status_code == 400
         assert (
-            response.json()["detail"] == f"Не переданы параметры для обновления объекта"
+            response.json()["detail"] == "Не переданы параметры для обновления объекта"
         )
 
     async def test_update_non_existent_note(
@@ -399,7 +404,7 @@ class TestUpdateNote:
         )
         assert response.status_code == 403
         assert (
-            response.json()["detail"] == f"Отсутствуют права на редактирование объекта"
+            response.json()["detail"] == "Отсутствуют права на редактирование объекта"
         )
         async with async_session_maker() as session:
             query = Select(Note).where(Note.id == note_old.id)

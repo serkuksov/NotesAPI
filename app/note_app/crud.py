@@ -10,10 +10,10 @@ from .models import Note
 
 
 def create_note(
-        user_id: int,
-        session: Session,
-        title: str,
-        content: str | None,
+    user_id: int,
+    session: Session,
+    title: str,
+    content: str | None,
 ) -> Note:
     db_note = Note(user_id=user_id, title=title, content=content)
     session.add(db_note)
@@ -23,39 +23,33 @@ def create_note(
 
 
 def get_note(
-        note_id: int,
-        session: Session,
+    note_id: int,
+    session: Session,
 ) -> Note | None:
-    db_note = (
-        session.query(Note).
-        filter_by(id=note_id).
-        one_or_none()
-    )
+    db_note = session.query(Note).filter_by(id=note_id).one_or_none()
     return db_note
 
 
 def get_list_user_notes(
-        user_id: int,
-        session: Session,
-        limit: int | None = 25,
-        page: int | None = 1
+    user_id: int, session: Session, limit: int | None = 25, page: int | None = 1
 ) -> List[Note | None]:
     skip = (page - 1) * limit
     db_notes = (
-        session.query(Note).
-        filter_by(user_id=user_id).
-        order_by(Note.updated_at.desc()).
-        limit(limit).
-        offset(skip).
-        all())
+        session.query(Note)
+        .filter_by(user_id=user_id)
+        .order_by(Note.updated_at.desc())
+        .limit(limit)
+        .offset(skip)
+        .all()
+    )
     return db_notes
 
 
 async def get_list_note(
-        note_filter: NoteFilter,
-        session: AsyncSession,
-        limit: int | None = 25,
-        page: int | None = 1
+    note_filter: NoteFilter,
+    session: AsyncSession,
+    limit: int | None = 25,
+    page: int | None = 1,
 ) -> List[Note | None]:
     skip = (page - 1) * limit
     query = select(Note).join(User).options(contains_eager(Note.user))
@@ -68,10 +62,10 @@ async def get_list_note(
 
 
 def update_note_fields(
-        note_id: int,
-        session: Session,
-        title: str = None,
-        content: str = None,
+    note_id: int,
+    session: Session,
+    title: str = None,
+    content: str = None,
 ) -> bool:
     stmt = Update(Note).filter_by(id=note_id)
     if title is not None:
@@ -84,18 +78,10 @@ def update_note_fields(
 
 
 def delete_note(
-        note_id: int,
-        session: Session,
+    note_id: int,
+    session: Session,
 ) -> bool:
     stmt = Delete(Note).filter_by(id=note_id)
     result = session.execute(stmt)
     session.commit()
     return result.rowcount > 0
-
-
-if __name__ == '__main__':
-    # print(create_user('Test'))
-    print(create_note(user_id=1, title='заголовок2', content='Много текстаю ю юю ю ю ю юю ю  ю'))
-    # print(update_note_fields(2, new_title='ffffffffff'))
-    # print(get_note(2).user)
-    pass

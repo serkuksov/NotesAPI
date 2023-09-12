@@ -7,8 +7,6 @@ from alembic import context
 
 from setings import settings
 from db import Base
-import note_app.models
-import auth.models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

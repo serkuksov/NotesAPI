@@ -1,6 +1,6 @@
 from httpx import AsyncClient, Client
 
-from tests.test_auth.conftest import get_user_from_database, jwt_token
+from tests.test_auth.conftest import get_user_from_database
 
 
 # Асинхронный тест

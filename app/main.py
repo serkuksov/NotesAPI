@@ -5,9 +5,9 @@ from note_app.routers import note_router
 
 
 app = FastAPI(
-    title='NotesAPI',
-    description=f'API реализующее CRUD для заметок пользователей.\n'
-                f'Авторизация пользователей с использованием JWT токенов'
+    title="NotesAPI",
+    description="API реализующее CRUD для заметок пользователей.\n"
+    "Авторизация пользователей с использованием JWT токенов",
 )
 
 app.include_router(user_router)
