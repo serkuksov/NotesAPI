@@ -1,5 +1,4 @@
 import pytest
-import os
 from httpx import AsyncClient
 from sqlalchemy import select
 
