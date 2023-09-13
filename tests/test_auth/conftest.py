@@ -5,8 +5,6 @@ from sqlalchemy import select
 from auth.models import User
 from tests.conftest import async_session_maker
 
-print(1 + 1)
-
 
 async def get_user_from_database(user_id: int) -> User:
     async with async_session_maker() as session:
