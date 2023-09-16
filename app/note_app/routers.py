@@ -10,6 +10,7 @@ from auth.models import User
 from db import get_async_session, get_session
 from note_app import crud, models, schemas, filters
 from note_app.models import Note
+from note_app.repositorie import NotesRepository
 
 note_router = APIRouter(prefix="/notes", tags=["Note"])
 
@@ -58,7 +59,7 @@ def get_list_note_user(
     user: User = Depends(current_active_user),
     pagination: schemas.Paginator = Depends(schemas.Paginator),
     session: Session = Depends(get_session),
-) -> list[models.Note]:
+) -> list[models.Note | None]:
     """
     Возвращает список всех заметок конкретного пользователя
     """
@@ -73,14 +74,13 @@ def get_list_note_user(
         404: {"description": "Объект с идентификатором id не найден"},
     },
 )
-def get_note_by_id(
+async def get_note_by_id(
     note_id: int,
-    session: Session = Depends(get_session),
 ) -> models.Note:
     """
     Возвращает информацию о заметке по ее идентификатору
     """
-    note = crud.get_note(note_id, session)
+    note = await NotesRepository().find_one(elm_id=note_id)
     if note is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -186,3 +186,8 @@ def delete_note(
         )
     if crud.delete_note(note_id, session):
         return f"Объект с идентификатором {note_id} успешно удален"
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Объект с идентификатором {note_id} не найден",
+        )
