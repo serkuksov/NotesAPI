@@ -1,48 +1,45 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi.exceptions import RequestValidationError
 from fastapi_filter import FilterDepends
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 
 from auth.auth import current_active_user
 from auth.models import User
-from db import get_async_session, get_session
-from note_app import crud, models, schemas, filters
-from note_app.models import Note
+from note_app import models, schemas, filters
+from note_app.repositorie import NotesRepository
 
 note_router = APIRouter(prefix="/notes", tags=["Note"])
 
 
 @note_router.get(
     "/",
-    # response_model=list[schemas.NoteListUser],
+    response_model=list[schemas.NoteListUser],
     responses={
         200: {"description": "Успешный ответ"},
     },
 )
 async def get_list_note(
-    note_filter: filters.NoteFilter = FilterDepends(filters.NoteFilter),
+    filter_note: filters.NoteFilter = FilterDepends(filters.NoteFilter),
     pagination: schemas.Paginator = Depends(schemas.Paginator),
-    session: AsyncSession = Depends(get_async_session),
 ) -> list[schemas.NoteListUser]:
     """
     Возвращает список всех заметок совместно с информацией о создавшем пользователе
     """
-    # TODO требуется разобраться с валидацией параметров order_by
-    note_atr = set(Note().__dict__["_sa_instance_state"].unloaded)
-    order_by_params = set(
-        str(note_filter.order_by).replace("+", "").replace("-", "").strip().split(",")
-    )
-    if not order_by_params.issubset(note_atr):
+    try:
+        res = await NotesRepository().find_notes_with_users(
+            filter_elm=filter_note,
+            **pagination.dict(),
+        )
+    except RequestValidationError:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Переданы не корректные данные для сортировки",
         )
-    result = await crud.get_list_note(note_filter, session, **pagination.dict())
+    # TODO необходимо избавится от конструкции с генераторм списков
     return [
         schemas.NoteListUser(user_name=elm.user.user_name, **elm.__dict__)
-        for elm in result
+        for elm in res
     ]
 
 
@@ -54,15 +51,18 @@ async def get_list_note(
         401: {"description": "Unauthorized"},
     },
 )
-def get_list_note_user(
+async def get_list_note_user(
     user: User = Depends(current_active_user),
     pagination: schemas.Paginator = Depends(schemas.Paginator),
-    session: Session = Depends(get_session),
-) -> list[models.Note]:
+) -> list[models.Note | None]:
     """
     Возвращает список всех заметок конкретного пользователя
     """
-    return crud.get_list_user_notes(user.id, session, **pagination.dict())
+    filter_note = filters.NoteFilterByUserId(user_id=user.id)
+    return await NotesRepository().find_elements(
+        filter_elm=filter_note,
+        **pagination.dict(),
+    )
 
 
 @note_router.get(
@@ -73,14 +73,13 @@ def get_list_note_user(
         404: {"description": "Объект с идентификатором id не найден"},
     },
 )
-def get_note_by_id(
+async def get_note_by_id(
     note_id: int,
-    session: Session = Depends(get_session),
 ) -> models.Note:
     """
     Возвращает информацию о заметке по ее идентификатору
     """
-    note = crud.get_note(note_id, session)
+    note = await NotesRepository().find_one(elm_id=note_id)
     if note is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -97,15 +96,14 @@ def get_note_by_id(
         201: {"description": "Объект успешно создан"},
     },
 )
-def cerate_note(
+async def cerate_note(
     note: Annotated[schemas.NoteCreate, Body()],
     user: User = Depends(current_active_user),
-    session: Session = Depends(get_session),
 ) -> models.Note:
     """
     Создание новой заметки
     """
-    return crud.create_note(user.id, session, **note.dict())
+    return await NotesRepository().add_one(user_id=user.id, **note.dict())
 
 
 @note_router.put(
@@ -117,40 +115,40 @@ def cerate_note(
         404: {"description": "Объект с идентификатором id не найден"},
     },
 )
-def update_note(
+async def update_note(
     note_id: int,
     note: Annotated[schemas.NoteUpdate, Body()],
     user: User = Depends(current_active_user),
-    session: Session = Depends(get_session),
 ) -> str:
     """
     Обновление заметки.
     """
-    existing_note = crud.get_note(note_id, session)
+    note_db = await NotesRepository().find_one(elm_id=note_id)
 
     # Проверка наличия заметки
-    if not existing_note:
+    if not note_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Объект с идентификатором {note_id} не найден",
         )
 
     # Проверка прав доступа
-    if user.id != existing_note.user_id and not user.is_superuser:
+    if user.id != note_db.user_id and not user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Отсутствуют права на редактирование объекта",
         )
+    note_param = note.dict(exclude_none=True)
 
-    # Обновление полей заметки
-    if note.title or note.content:
-        crud.update_note_fields(note_id, session, **note.dict())
-        return f"Объект с идентификатором {note_id} успешно обновлен"
-    else:
+    # Проверка что хотябы одно поле передано
+    if not note_param:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Не переданы параметры для обновления объекта",
         )
+
+    await NotesRepository().update_elm(elm_id=note_id, **note_param)
+    return f"Объект с идентификатором {note_id} успешно обновлен"
 
 
 @note_router.delete(
@@ -161,28 +159,28 @@ def update_note(
         404: {"description": "Объект с идентификатором id не найден"},
     },
 )
-def delete_note(
+async def delete_note(
     note_id: int,
     user: User = Depends(current_active_user),
-    session: Session = Depends(get_session),
 ) -> str:
     """
     Удаление заметки
     """
-    existing_note = crud.get_note(note_id, session)
+    note_db = await NotesRepository().find_one(elm_id=note_id)
 
     # Проверка наличия заметки
-    if not existing_note:
+    if not note_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Объект с идентификатором {note_id} не найден",
         )
 
     # Проверка прав доступа
-    if user.id != existing_note.user_id and not user.is_superuser:
+    if user.id != note_db.user_id and not user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Отсутствуют права на удаление объекта",
         )
-    if crud.delete_note(note_id, session):
-        return f"Объект с идентификатором {note_id} успешно удален"
+
+    await NotesRepository().delete_elm(elm_id=note_id)
+    return f"Объект с идентификатором {note_id} успешно удален"

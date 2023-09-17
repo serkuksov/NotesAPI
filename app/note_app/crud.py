@@ -31,7 +31,10 @@ def get_note(
 
 
 def get_list_user_notes(
-    user_id: int, session: Session, limit: int | None = 25, page: int | None = 1
+    user_id: int,
+    session: Session,
+    limit: int = 25,
+    page: int = 1,
 ) -> List[Note | None]:
     skip = (page - 1) * limit
     db_notes = (
@@ -48,9 +51,9 @@ def get_list_user_notes(
 async def get_list_note(
     note_filter: NoteFilter,
     session: AsyncSession,
-    limit: int | None = 25,
-    page: int | None = 1,
-) -> List[Note | None]:
+    limit: int = 25,
+    page: int = 1,
+) -> List[Note]:
     skip = (page - 1) * limit
     query = select(Note).join(User).options(contains_eager(Note.user))
     query = note_filter.filter(query)
@@ -64,8 +67,8 @@ async def get_list_note(
 def update_note_fields(
     note_id: int,
     session: Session,
-    title: str = None,
-    content: str = None,
+    title: str | None = None,
+    content: str | None = None,
 ) -> bool:
     stmt = Update(Note).filter_by(id=note_id)
     if title is not None:

@@ -47,3 +47,10 @@ class NoteFilter(Filter):
     class Constants(Filter.Constants):
         model = Note
         search_model_fields = ["title", "content"]
+
+
+class NoteFilterByUserId(Filter):
+    user_id: Optional[int]
+
+    class Constants(Filter.Constants):
+        model = Note
