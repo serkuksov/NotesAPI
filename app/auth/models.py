@@ -10,7 +10,7 @@ from db import Base, get_async_session
 class User(SQLAlchemyBaseUserTable[int], Base):
     user_name = Column(String(60), nullable=False, unique=True)
 
-    notes = relationship('Note', overlaps="user")
+    notes = relationship("Note", overlaps="user")
 
     def __str__(self):
         return self.user_name

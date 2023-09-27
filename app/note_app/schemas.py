@@ -5,17 +5,21 @@ from pydantic import BaseModel, Field
 
 
 class Paginator(BaseModel):
-    limit: int | None = Field(Query(
-        default=25,
-        ge=5,
-        le=50,
-        description='Количество элементов в выдаче',
-    ))
-    page: int | None = Field(Query(
-        default=1,
-        ge=1,
-        description='Номер страницы',
-    ))
+    limit: int | None = Field(
+        Query(
+            default=25,
+            ge=5,
+            le=50,
+            description="Количество элементов в выдаче",
+        )
+    )
+    page: int | None = Field(
+        Query(
+            default=1,
+            ge=1,
+            description="Номер страницы",
+        )
+    )
 
 
 class NoteCreate(BaseModel):
