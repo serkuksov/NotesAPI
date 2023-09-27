@@ -41,3 +41,6 @@ notes = "uvicorn main:app --reload"
 exclude = [
     "alembic",
 ]
+
+[tool.black]
+exclude = "/alembic"
