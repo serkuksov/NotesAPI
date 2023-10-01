@@ -37,7 +37,7 @@ jobs:
         run: |
           poetry run black .
           poetry run ruff check .
-#          poetry run mypy .
+          poetry run mypy .
       - name: Build the stack
         run: docker-compose --file docker-compose-test.yml up -d
       - name: Tests
