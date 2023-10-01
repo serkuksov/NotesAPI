@@ -2,7 +2,9 @@ version: "3.9"
 
 services:
   web-app:
-    build: ./app
+    build:
+      context: .
+      dockerfile: ./app/Dockerfile
     container_name: app-NotesAPI
     command: ./entrypoint.sh
     ports:

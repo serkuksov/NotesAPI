@@ -1,4 +1,4 @@
 #!/bin/sh
 
-alembic upgrade head
-uvicorn main:app  --proxy-headers --host 0.0.0.0 --port 8000
+poetry run alembic upgrade head
+poetry run uvicorn main:app  --proxy-headers --host 0.0.0.0 --port 8000

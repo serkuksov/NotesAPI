@@ -6,14 +6,18 @@ ENV PYTHONUNBUFFERED 1
 RUN apk update && apk add postgresql-dev gcc python3-dev musl-dev
 
 RUN pip install --upgrade pip
+# Установка poetry
+RUN python -m pip install --no-cache-dir poetry
 
 RUN mkdir -p /home/app
 
 WORKDIR /home/app
 
-COPY ./requirements.txt .
+# Копирование файлов с зависимостями
+COPY ./pyproject.toml .
+COPY ./poetry.lock .
 
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt --no-deps
+# Установка зависимостей
+RUN poetry install --without dev,test
 
-COPY . .
+COPY ./app .
