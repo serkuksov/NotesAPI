@@ -8,12 +8,26 @@ from db import async_session_maker, Base
 
 
 class AbstractRepository(ABC):
+    """Абстрактный репозиторий"""
+
     @abstractmethod
     async def add_one(self, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
     async def find_one(self, elm_id: int):
+        raise NotImplementedError
+
+    @abstractmethod
+    async def update_elm(self, elm_id: int, **kwargs):
+        raise NotImplementedError
+
+    @abstractmethod
+    async def delete_elm(self, elm_id: int):
+        raise NotImplementedError
+
+    @abstractmethod
+    async def find_all(self, limit: int, page: int):
         raise NotImplementedError
 
 
@@ -49,6 +63,10 @@ class SQLAlchemyRepository(AbstractRepository):
             await session.commit()
             return res.rowcount > 0
 
+    def find_all(self, limit: int, page: int):
+        query = self.get_query()
+        return self.pagination_query(query=query, limit=limit, page=page)
+
     @staticmethod
     async def _find_elements(
         query: Select,
@@ -68,6 +86,11 @@ class SQLAlchemyRepository(AbstractRepository):
 
     def get_query(self) -> Select:
         return select(self.model)
+
+    @staticmethod
+    def pagination_query(query: Select, limit: int, page: int) -> Select:
+        skip = (page - 1) * limit
+        return query.limit(limit).offset(skip)
 
     async def find_elements(
         self,
