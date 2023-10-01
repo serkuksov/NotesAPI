@@ -27,12 +27,11 @@ class TestCreateNote:
         assert "updated_at" in created_note
 
         async with async_session_maker() as session:
-            query = Select(Note).where(Note.id == created_note["id"])
+            query: Select = Select(Note).where(Note.id == created_note["id"])
             result = await session.execute(query)
-            result = result.fetchone()
+            note_db = result.scalar()
 
-        assert result is not None
-        note_db = result[0]
+        assert note_db is not None
         assert note_db.user_id == 1
 
         async with async_session_maker() as session:
@@ -112,9 +111,10 @@ class TestDeleteNote:
         assert response.json()["detail"] == "Unauthorized"
 
         async with async_session_maker() as session:
-            query = Select(Note.id).where(Note.id == note_id)
+            query: Select = Select(Note.id).where(Note.id == note_id)
             result = await session.execute(query)
-        assert result.scalar()
+            note = result.scalar()
+        assert note is not None
 
     async def test_delete_note_non_permission_user(
         self,
@@ -124,7 +124,7 @@ class TestDeleteNote:
         headers = {"Authorization": f"Bearer {jwt_token}"}
 
         async with async_session_maker() as session:
-            query = Select(Note.id).where(Note.user_id == 2)
+            query: Select = Select(Note.id).where(Note.user_id == 2)
             result = await session.execute(query)
         note_id = result.scalar()
 
@@ -297,9 +297,10 @@ class TestUpdateNote:
         assert response.status_code == 200
         assert response.json() == f"Объект с идентификатором {note_id} успешно обновлен"
         async with async_session_maker() as session:
-            query = Select(Note).where(Note.id == note_id)
+            query: Select = Select(Note).where(Note.id == note_id)
             result = await session.execute(query)
             note = result.scalar()
+        assert note is not None
         assert note.title == new_date_note["title"]
         assert note.content == new_date_note["content"]
         assert note.created_at != note.updated_at
@@ -395,10 +396,10 @@ class TestUpdateNote:
             "content": "test_content_new",
         }
         async with async_session_maker() as session:
-            query = Select(Note).where(Note.user_id == 2)
+            query: Select = Select(Note).where(Note.user_id == 2)
             result = await session.execute(query)
-        note_old = result.scalar()
-
+            note_old = result.scalar()
+        assert note_old is not None
         response = await async_client.put(
             f"/notes/{note_old.id}/", json=new_date_note, headers=headers
         )
@@ -409,6 +410,7 @@ class TestUpdateNote:
         async with async_session_maker() as session:
             query = Select(Note).where(Note.id == note_old.id)
             result = await session.execute(query)
-        note_new = result.scalar()
+            note_new = result.scalar()
+        assert note_new is not None
         assert note_old.title == note_new.title
         assert note_old.content == note_new.content

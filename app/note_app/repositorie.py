@@ -1,3 +1,5 @@
+from typing import Sequence, Any
+
 from fastapi_filter.contrib.sqlalchemy import Filter
 from sqlalchemy.orm import contains_eager
 
@@ -11,10 +13,10 @@ class NotesRepository(SQLAlchemyRepository):
 
     async def find_notes_with_users(
         self,
-        filter_elm: Filter = None,
+        filter_elm: Filter | None = None,
         limit: int = 25,
         page: int = 1,
-    ) -> list[Note]:
+    ) -> Sequence[Any]:
         query = self.get_query().join(User).options(contains_eager(Note.user))
         return await self._find_elements(
             query=query,

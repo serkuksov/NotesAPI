@@ -1,14 +1,14 @@
 from typing import AsyncGenerator, Generator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Integer, Column
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, AsyncSession
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker, Session
+from sqlalchemy.orm import DeclarativeBase, sessionmaker, Session
 
 from setings import settings
 
 
 class Base(DeclarativeBase):
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id = Column(Integer, primary_key=True)
 
 
 engine = create_engine(settings.SQL_URL, echo=True)

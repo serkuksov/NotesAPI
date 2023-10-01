@@ -13,7 +13,7 @@ class UserName(BaseModel):
         orm_mode = True
 
 
-class UserCreate(schemas.CreateUpdateDictModel):
+class UserCreate(schemas.BaseUserCreate):
     email: EmailStr
     password: str
     user_name: str

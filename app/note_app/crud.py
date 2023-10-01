@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Sequence
 
 from sqlalchemy import Update, Delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,7 +35,7 @@ def get_list_user_notes(
     session: Session,
     limit: int = 25,
     page: int = 1,
-) -> List[Note | None]:
+) -> List[Note]:
     skip = (page - 1) * limit
     db_notes = (
         session.query(Note)
@@ -53,7 +53,7 @@ async def get_list_note(
     session: AsyncSession,
     limit: int = 25,
     page: int = 1,
-) -> List[Note]:
+) -> Sequence[Note]:
     skip = (page - 1) * limit
     query = select(Note).join(User).options(contains_eager(Note.user))
     query = note_filter.filter(query)

@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 from pathlib import Path, PurePath
 
 from pydantic import BaseSettings

@@ -26,6 +26,7 @@ async def test_register_ac(async_client: AsyncClient):
     assert data_from_response == data_user_db
 
     users_from_db = await get_user_from_database(data_from_response["id"])
+    assert users_from_db is not None
     assert data_user_db["id"] == users_from_db.id
     assert data_user_db["email"] == users_from_db.email
     assert data_user_db["user_name"] == users_from_db.user_name

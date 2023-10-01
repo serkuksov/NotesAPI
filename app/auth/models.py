@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 from fastapi import Depends
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase, SQLAlchemyBaseUserTable
 from sqlalchemy import Column, String

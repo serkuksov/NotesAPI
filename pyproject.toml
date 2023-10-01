@@ -45,3 +45,19 @@ exclude = [
 
 [tool.black]
 exclude = "/alembic"
+
+[tool.mypy]
+files = [
+    "app",
+]
+exclude = [
+    "alembic",
+    "venv",
+    "tests",
+]
+
+[tool.pytest.ini_options]
+pythonpath = "./app"
+asyncio_mode = "auto"
+env_override_existing_values = 1
+env_files = ".test.env"

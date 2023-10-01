@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Sequence
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from sqlalchemy import insert, select, update, delete, Select
@@ -27,12 +27,11 @@ class SQLAlchemyRepository(AbstractRepository):
             await session.commit()
             return res.scalar()
 
-    async def find_one(self, elm_id: int) -> Any:
+    async def find_one(self, elm_id: int) -> Any | None:
         async with async_session_maker() as session:
             query = select(self.model).where(self.model.id == elm_id)
             res = await session.execute(query)
-            res = res.scalar()
-            return res
+            return res.scalar_one_or_none()
 
     async def update_elm(self, elm_id: int, **kwargs) -> bool:
         async with async_session_maker() as session:
@@ -53,13 +52,12 @@ class SQLAlchemyRepository(AbstractRepository):
     @staticmethod
     async def _find_elements(
         query: Select,
-        filter_elm: Filter,
+        filter_elm: Filter | None,
         limit: int,
         page: int,
-    ) -> list[Any]:
+    ) -> Sequence[Any]:
         skip = (page - 1) * limit
         async with async_session_maker() as session:
-            # query = self.get_query()
             if filter_elm is not None:
                 query = filter_elm.filter(query)
                 if hasattr(filter_elm, "order_by"):
@@ -73,10 +71,10 @@ class SQLAlchemyRepository(AbstractRepository):
 
     async def find_elements(
         self,
-        filter_elm: Filter = None,
+        filter_elm: Filter | None = None,
         limit: int = 25,
         page: int = 1,
-    ) -> list[Any]:
+    ) -> Sequence[Any]:
         return await self._find_elements(
             query=self.get_query(),
             filter_elm=filter_elm,

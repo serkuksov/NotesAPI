@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Sequence
 
 from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi.exceptions import RequestValidationError
@@ -54,7 +54,7 @@ async def get_list_note(
 async def get_list_note_user(
     user: User = Depends(current_active_user),
     pagination: schemas.Paginator = Depends(schemas.Paginator),
-) -> list[models.Note | None]:
+) -> Sequence[models.Note]:
     """
     Возвращает список всех заметок конкретного пользователя
     """
